@@ -90,3 +90,126 @@ fn flatten_node(node: &BookmarkNode, folder_path: String, entries: &mut Vec<Entr
         _ => {}
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    fn write_fixture(content: &str) -> NamedTempFile {
+        let mut f = NamedTempFile::new().unwrap();
+        f.write_all(content.as_bytes()).unwrap();
+        f
+    }
+
+    #[test]
+    fn load_bookmarks_basic() {
+        let json = r#"{
+            "roots": {
+                "bookmark_bar": {
+                    "type": "folder",
+                    "name": "Bookmarks Bar",
+                    "children": [
+                        {"type": "url", "url": "https://example.com", "name": "Example"}
+                    ]
+                },
+                "other": {"type": "folder", "children": []},
+                "synced": {"type": "folder", "children": []}
+            }
+        }"#;
+        let f = write_fixture(json);
+        let entries = load_bookmarks(f.path()).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].url, "https://example.com");
+        assert_eq!(entries[0].title, "Example");
+    }
+
+    #[test]
+    fn load_bookmarks_nested_folders() {
+        let json = r#"{
+            "roots": {
+                "bookmark_bar": {
+                    "type": "folder",
+                    "name": "Bar",
+                    "children": [
+                        {
+                            "type": "folder",
+                            "name": "Work",
+                            "children": [
+                                {"type": "url", "url": "https://jira.com", "name": "Jira"}
+                            ]
+                        }
+                    ]
+                }
+            }
+        }"#;
+        let f = write_fixture(json);
+        let entries = load_bookmarks(f.path()).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].folder, Some("Bar / Work".to_string()));
+    }
+
+    #[test]
+    fn load_bookmarks_all_roots() {
+        let json = r#"{
+            "roots": {
+                "bookmark_bar": {
+                    "type": "folder",
+                    "children": [{"type": "url", "url": "https://a.com", "name": "A"}]
+                },
+                "other": {
+                    "type": "folder",
+                    "children": [{"type": "url", "url": "https://b.com", "name": "B"}]
+                },
+                "synced": {
+                    "type": "folder",
+                    "children": [{"type": "url", "url": "https://c.com", "name": "C"}]
+                }
+            }
+        }"#;
+        let f = write_fixture(json);
+        let entries = load_bookmarks(f.path()).unwrap();
+        assert_eq!(entries.len(), 3);
+    }
+
+    #[test]
+    fn load_bookmarks_missing_file() {
+        let result = load_bookmarks(Path::new("/nonexistent/bookmarks"));
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn load_bookmarks_empty() {
+        let json = r#"{
+            "roots": {
+                "bookmark_bar": {"type": "folder", "children": []},
+                "other": null,
+                "synced": null
+            }
+        }"#;
+        let f = write_fixture(json);
+        let entries = load_bookmarks(f.path()).unwrap();
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn load_bookmarks_skips_invalid_nodes() {
+        let json = r#"{
+            "roots": {
+                "bookmark_bar": {
+                    "type": "folder",
+                    "children": [
+                        {"type": "url"},
+                        {"type": "url", "url": "https://valid.com", "name": "Valid"},
+                        {"type": "separator"}
+                    ]
+                }
+            }
+        }"#;
+        let f = write_fixture(json);
+        let entries = load_bookmarks(f.path()).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].url, "https://valid.com");
+    }
+}
