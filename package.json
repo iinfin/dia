@@ -4,7 +4,10 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"prepare": "husky"
+		"prepare": "husky",
+		"build": "cargo build --release --manifest-path dia-cli/Cargo.toml",
+		"test": "cargo test --manifest-path dia-cli/Cargo.toml",
+		"run": "./dia-cli/target/release/dia-cli"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^20.1.0",
