@@ -62,8 +62,12 @@ enum Commands {
 
     /// Search history, bookmarks, and tabs
     Search {
-        /// Search query
-        query: String,
+        /// Search query (optional if --all is used)
+        query: Option<String>,
+
+        /// Return all entries without filtering
+        #[arg(short, long)]
+        all: bool,
 
         /// Sources to search (comma-separated: history,bookmarks,tabs)
         #[arg(short, long, default_value = "history,bookmarks,tabs")]
@@ -129,11 +133,21 @@ fn run() -> Result<()> {
 
         Commands::Search {
             query,
+            all,
             sources,
             limit,
             profile,
             json,
         } => {
+            let query = match (&query, all) {
+                (Some(q), _) => q.clone(),
+                (None, true) => String::new(),
+                (None, false) => {
+                    eprintln!("error: either <QUERY> or --all is required");
+                    std::process::exit(1);
+                }
+            };
+
             let config = Config::new(&profile)?;
             let source_list: Vec<&str> = sources.split(',').map(|s| s.trim()).collect();
 
