@@ -40,6 +40,10 @@ impl Config {
         self.profile_path.join("Bookmarks")
     }
 
+    pub fn sessions_dir(&self) -> PathBuf {
+        self.profile_path.join("Sessions")
+    }
+
     fn list_profiles(data_dir: &PathBuf) -> Result<Vec<String>> {
         let mut profiles = Vec::new();
         for entry in std::fs::read_dir(data_dir)? {

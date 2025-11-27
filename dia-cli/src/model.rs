@@ -13,6 +13,8 @@ pub struct Entry {
     pub last_visit: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub folder: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tab_id: Option<i32>,
     #[serde(skip)]
     pub url_norm: String,
     #[serde(skip)]
@@ -26,6 +28,7 @@ pub struct Entry {
 pub enum Source {
     History = 0,
     Bookmark = 1,
+    Tab = 2,
 }
 
 impl Entry {
@@ -41,6 +44,7 @@ impl Entry {
             visit_count: Some(visit_count),
             last_visit: Some(last_visit),
             folder: None,
+            tab_id: None,
             url_norm,
             title_norm,
             canonical_key,
@@ -59,6 +63,26 @@ impl Entry {
             visit_count: None,
             last_visit: None,
             folder,
+            tab_id: None,
+            url_norm,
+            title_norm,
+            canonical_key,
+        }
+    }
+
+    pub fn new_tab(url: String, title: String, tab_id: i32) -> Self {
+        let url_norm = normalize(&url);
+        let title_norm = normalize(&title);
+        let canonical_key = canonical_url_hash(&url);
+
+        Self {
+            url,
+            title,
+            source: Source::Tab,
+            visit_count: None,
+            last_visit: None,
+            folder: None,
+            tab_id: Some(tab_id),
             url_norm,
             title_norm,
             canonical_key,

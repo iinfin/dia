@@ -17,8 +17,11 @@ dia-cli history [--limit N] [--profile PROFILE] [--json]
 # List bookmarks
 dia-cli bookmarks [--profile PROFILE] [--json]
 
+# List open tabs (best-effort)
+dia-cli tabs [--profile PROFILE] [--json]
+
 # Search across sources
-dia-cli search <QUERY> [--sources history,bookmarks] [--limit N] [--profile PROFILE] [--json]
+dia-cli search <QUERY> [--sources history,bookmarks,tabs] [--limit N] [--profile PROFILE] [--json]
 ```
 
 ## Performance
@@ -27,7 +30,8 @@ dia-cli search <QUERY> [--sources history,bookmarks] [--limit N] [--profile PROF
 |---------|--------|--------|
 | `history --limit 100` | <20ms | ~6ms |
 | `bookmarks` | <10ms | ~1.3ms |
-| `search` (cold) | <50ms | ~43ms |
+| `tabs` | <30ms | ~1.8ms |
+| `search` (cold, all sources) | <50ms | ~47ms |
 
 ## Raycast Integration
 
@@ -50,4 +54,4 @@ cargo clippy -- -D warnings
 
 ## License
 
-MIT
+GPL-3.0-or-later (due to snss dependency)

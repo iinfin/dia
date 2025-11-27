@@ -4,6 +4,7 @@ mod history;
 mod model;
 mod output;
 mod search;
+mod tabs;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -13,7 +14,7 @@ use search::{dedupe_entries, SearchEngine};
 
 #[derive(Parser)]
 #[command(name = "dia-cli")]
-#[command(about = "Fast CLI for querying Dia browser history and bookmarks")]
+#[command(about = "Fast CLI for querying Dia browser history, bookmarks, and tabs")]
 #[command(version)]
 struct Cli {
     #[command(subcommand)]
@@ -48,13 +49,24 @@ enum Commands {
         json: bool,
     },
 
-    /// Search history and bookmarks
+    /// List open tabs (best-effort)
+    Tabs {
+        /// Browser profile name
+        #[arg(short, long, default_value = "Default")]
+        profile: String,
+
+        /// Output as JSON array (default: newline-delimited JSON)
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Search history, bookmarks, and tabs
     Search {
         /// Search query
         query: String,
 
-        /// Sources to search (comma-separated: history,bookmarks)
-        #[arg(short, long, default_value = "history,bookmarks")]
+        /// Sources to search (comma-separated: history,bookmarks,tabs)
+        #[arg(short, long, default_value = "history,bookmarks,tabs")]
         sources: String,
 
         /// Maximum number of results
@@ -104,6 +116,17 @@ fn run() -> Result<()> {
             }
         }
 
+        Commands::Tabs { profile, json } => {
+            let config = Config::new(&profile)?;
+            let entries = tabs::load_tabs(&config.sessions_dir())?;
+
+            if json {
+                output::print_entries_array(&entries);
+            } else {
+                output::print_entries(&entries);
+            }
+        }
+
         Commands::Search {
             query,
             sources,
@@ -124,6 +147,13 @@ fn run() -> Result<()> {
             if source_list.contains(&"bookmarks") {
                 let bookmark_entries = bookmarks::load_bookmarks(&config.bookmarks_path())?;
                 all_entries.extend(bookmark_entries);
+            }
+
+            if source_list.contains(&"tabs") {
+                match tabs::load_tabs(&config.sessions_dir()) {
+                    Ok(tab_entries) => all_entries.extend(tab_entries),
+                    Err(e) => eprintln!("warning: {}", e),
+                }
             }
 
             let deduped = dedupe_entries(all_entries);

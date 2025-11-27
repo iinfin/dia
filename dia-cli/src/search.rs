@@ -63,6 +63,7 @@ impl SearchEngine {
         let freq_boost = 1.0 + (entry.visit_count.unwrap_or(0) as f32).ln_1p() * 0.1;
 
         let source_weight = match entry.source {
+            Source::Tab => 1.3,
             Source::Bookmark => 1.1,
             Source::History => 1.0,
         };

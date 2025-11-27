@@ -3,7 +3,7 @@ name = "dia-cli"
 version = "0.1.0"
 edition = "2021"
 description = "Fast CLI for querying Dia browser history, bookmarks, and tabs"
-license = "MIT"
+license = "GPL-3.0-or-later"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
@@ -13,6 +13,7 @@ rusqlite = { version = "0.32", features = ["bundled"] }
 nucleo-matcher = "0.3"
 ahash = "0.8"
 anyhow = "1"
+snss = "0.1"
 
 [profile.release]
 lto = true
