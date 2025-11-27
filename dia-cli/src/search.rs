@@ -17,7 +17,12 @@ impl SearchEngine {
         }
     }
 
-    pub fn search<'a>(&mut self, entries: &'a [Entry], query: &str, limit: usize) -> Vec<&'a Entry> {
+    pub fn search<'a>(
+        &mut self,
+        entries: &'a [Entry],
+        query: &str,
+        limit: usize,
+    ) -> Vec<&'a Entry> {
         if query.is_empty() {
             return entries.iter().take(limit).collect();
         }

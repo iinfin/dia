@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use std::path::PathBuf;
 
 const DIA_DATA_DIR: &str = "Library/Application Support/Dia/User Data";
@@ -13,10 +13,7 @@ impl Config {
         let data_dir = PathBuf::from(&home).join(DIA_DATA_DIR);
 
         if !data_dir.exists() {
-            bail!(
-                "dia data directory not found at {}",
-                data_dir.display()
-            );
+            bail!("dia data directory not found at {}", data_dir.display());
         }
 
         let profile_path = data_dir.join(profile);

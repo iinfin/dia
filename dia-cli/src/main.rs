@@ -98,7 +98,11 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::History { limit, profile, json } => {
+        Commands::History {
+            limit,
+            profile,
+            json,
+        } => {
             let config = Config::new(&profile)?;
             let entries = history::load_history(&config.history_path(), limit)?;
 

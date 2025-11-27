@@ -155,7 +155,10 @@ mod tests {
     #[test]
     fn canonical_url_strips_query() {
         assert_eq!(canonical_url("example.com?foo=bar"), "example.com");
-        assert_eq!(canonical_url("example.com/page?a=1&b=2"), "example.com/page");
+        assert_eq!(
+            canonical_url("example.com/page?a=1&b=2"),
+            "example.com/page"
+        );
     }
 
     #[test]

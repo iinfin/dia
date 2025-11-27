@@ -38,8 +38,12 @@ pub fn load_bookmarks(bookmarks_path: &Path) -> Result<Vec<Entry>> {
         .with_context(|| format!("failed to open bookmarks at {}", bookmarks_path.display()))?;
 
     let reader = BufReader::with_capacity(16 * 1024, file);
-    let bookmark_file: BookmarkFile = serde_json::from_reader(reader)
-        .with_context(|| format!("failed to parse bookmarks JSON at {}", bookmarks_path.display()))?;
+    let bookmark_file: BookmarkFile = serde_json::from_reader(reader).with_context(|| {
+        format!(
+            "failed to parse bookmarks JSON at {}",
+            bookmarks_path.display()
+        )
+    })?;
 
     let mut entries = Vec::with_capacity(500);
 

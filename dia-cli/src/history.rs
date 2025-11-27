@@ -45,8 +45,11 @@ pub fn load_history(history_path: &Path, limit: usize) -> Result<Vec<Entry>> {
 fn open_immutable(path: &Path) -> Result<Connection> {
     let uri = format!("file:{}?immutable=1", path.display());
 
-    Connection::open_with_flags(&uri, OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_URI)
-        .with_context(|| format!("failed to open history database at {}", path.display()))
+    Connection::open_with_flags(
+        &uri,
+        OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_URI,
+    )
+    .with_context(|| format!("failed to open history database at {}", path.display()))
 }
 
 pub(crate) fn chromium_to_unix_ms(chromium_time: i64) -> i64 {
@@ -76,14 +79,7 @@ mod tests {
         f
     }
 
-    fn insert_entry(
-        path: &Path,
-        url: &str,
-        title: &str,
-        visits: i64,
-        time: i64,
-        hidden: bool,
-    ) {
+    fn insert_entry(path: &Path, url: &str, title: &str, visits: i64, time: i64, hidden: bool) {
         let conn = Connection::open(path).unwrap();
         conn.execute(
             "INSERT INTO urls (url, title, visit_count, last_visit_time, hidden) VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -105,7 +101,14 @@ mod tests {
     #[test]
     fn load_history_basic() {
         let f = create_test_db();
-        insert_entry(f.path(), "https://example.com", "Example", 5, 13344480000000000, false);
+        insert_entry(
+            f.path(),
+            "https://example.com",
+            "Example",
+            5,
+            13344480000000000,
+            false,
+        );
 
         let entries = load_history(f.path(), 10).unwrap();
         assert_eq!(entries.len(), 1);
