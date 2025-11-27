@@ -5,9 +5,15 @@
 	"type": "module",
 	"scripts": {
 		"prepare": "husky",
-		"build": "cargo build --release --manifest-path dia-cli/Cargo.toml",
-		"test": "cargo test --manifest-path dia-cli/Cargo.toml",
-		"run": "./dia-cli/target/release/dia-cli"
+		"build": "cd dia-zig && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache zig build -Doptimize=ReleaseFast",
+		"test": "cd dia-zig && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache zig build test",
+		"run": "cd dia-zig && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache zig build run --",
+		"run:bin": "ZIG_GLOBAL_CACHE_DIR=./.zig-cache ZIG_LOCAL_CACHE_DIR=./.zig-cache ./dia-zig/zig-out/bin/dia-zig",
+		"clean": "rm -rf .zig-cache dia-zig/zig-cache",
+		"bench": "./scripts/bench.sh",
+		"build-rs": "cargo build --release --manifest-path dia-rs/Cargo.toml",
+		"test-rs": "cargo test --manifest-path dia-rs/Cargo.toml",
+		"run-rs": "./dia-rs/target/release/dia-rs"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^20.1.0",
