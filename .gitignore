@@ -1,0 +1,43 @@
+# Rust
+target/
+Cargo.lock
+
+# Dependencies & Package Management
+node_modules/
+bun.lockb
+bun.lock
+
+# Git Hooks & Tooling
+.husky/_
+
+# Operating System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# IDEs
+.vscode/
+.idea/
+.zed/
+
+# Misc
+*.backup
+*.bak
+*.tmp
+*.temp
+.tmp/
+.temp/
+tmp/
+
+# Logs
+*.log
+logs/
+
+# Local environment files
+.env
+.env.local
