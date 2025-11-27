@@ -13,7 +13,7 @@ use config::Config;
 use search::{dedupe_entries, SearchEngine};
 
 #[derive(Parser)]
-#[command(name = "dia-cli")]
+#[command(name = "dia-rs")]
 #[command(about = "Fast CLI for querying Dia browser history, bookmarks, and tabs")]
 #[command(version)]
 struct Cli {
