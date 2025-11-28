@@ -99,14 +99,16 @@ fn buildFolderPath(
 }
 
 // tests
-fn writeFixture(path: []const u8, content: []const u8) !void {
-    try std.fs.cwd().writeFile(path, content);
+fn writeFixture(dir: std.fs.Dir, name: []const u8, content: []const u8) !void {
+    try dir.writeFile(.{ .sub_path = name, .data = content });
 }
 
 test "load bookmarks basic" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    const path = try tmp.dir.join(std.testing.allocator, &.{"Bookmarks"});
+    const dir_path = try tmp.dir.realpathAlloc(std.testing.allocator, ".");
+    defer std.testing.allocator.free(dir_path);
+    const path = try std.fs.path.join(std.testing.allocator, &.{ dir_path, "Bookmarks" });
     defer std.testing.allocator.free(path);
 
     const json =
@@ -124,7 +126,7 @@ test "load bookmarks basic" {
         \\  }
         \\}
     ;
-    try writeFixture(path, json);
+    try writeFixture(tmp.dir, "Bookmarks", json);
 
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -138,7 +140,9 @@ test "load bookmarks basic" {
 test "load bookmarks nested folders" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    const path = try tmp.dir.join(std.testing.allocator, &.{"Bookmarks"});
+    const dir_path = try tmp.dir.realpathAlloc(std.testing.allocator, ".");
+    defer std.testing.allocator.free(dir_path);
+    const path = try std.fs.path.join(std.testing.allocator, &.{ dir_path, "Bookmarks" });
     defer std.testing.allocator.free(path);
 
     const json =
@@ -160,7 +164,7 @@ test "load bookmarks nested folders" {
         \\  }
         \\}
     ;
-    try writeFixture(path, json);
+    try writeFixture(tmp.dir, "Bookmarks", json);
 
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

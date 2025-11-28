@@ -79,7 +79,7 @@ test "chromium epoch conversion" {
 
 fn createTestDb(path: []const u8) !void {
     var db: ?*sqlite.sqlite3 = null;
-    const zpath = try std.cstr.addNullByte(std.testing.allocator, path);
+    const zpath = try std.fmt.allocPrint(std.testing.allocator, "{s}\x00", .{path});
     defer std.testing.allocator.free(zpath);
     if (sqlite.sqlite3_open(zpath.ptr, &db) != sqlite.SQLITE_OK) return error.DbCreateFailed;
     defer _ = sqlite.sqlite3_close(db);
@@ -91,7 +91,7 @@ fn createTestDb(path: []const u8) !void {
 
 fn insertEntry(path: []const u8, url: []const u8, title: []const u8, visits: i64, time: i64, hidden: bool) !void {
     var db: ?*sqlite.sqlite3 = null;
-    const zpath = try std.cstr.addNullByte(std.testing.allocator, path);
+    const zpath = try std.fmt.allocPrint(std.testing.allocator, "{s}\x00", .{path});
     defer std.testing.allocator.free(zpath);
     if (sqlite.sqlite3_open(zpath.ptr, &db) != sqlite.SQLITE_OK) return error.DbCreateFailed;
     defer _ = sqlite.sqlite3_close(db);
@@ -99,7 +99,7 @@ fn insertEntry(path: []const u8, url: []const u8, title: []const u8, visits: i64
     const stmt = try std.fmt.allocPrint(
         std.testing.allocator,
         "INSERT INTO urls (url, title, visit_count, last_visit_time, hidden) VALUES ('{s}', '{s}', {d}, {d}, {d});",
-        .{ url, title, visits, time, if (hidden) 1 else 0 },
+        .{ url, title, visits, time, @as(i64, if (hidden) 1 else 0) },
     );
     defer std.testing.allocator.free(stmt);
     _ = sqlite.sqlite3_exec(db, stmt.ptr, null, null, null);
@@ -108,7 +108,9 @@ fn insertEntry(path: []const u8, url: []const u8, title: []const u8, visits: i64
 test "load history basic" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    const path = try tmp.dir.join(std.testing.allocator, &.{"History"});
+    const dir_path = try tmp.dir.realpathAlloc(std.testing.allocator, ".");
+    defer std.testing.allocator.free(dir_path);
+    const path = try std.fs.path.join(std.testing.allocator, &.{ dir_path, "History" });
     defer std.testing.allocator.free(path);
 
     try createTestDb(path);
