@@ -3,6 +3,7 @@ const model = @import("model.zig");
 
 const Entry = model.Entry;
 const Source = model.Source;
+const PriorityQueue = std.PriorityQueue;
 
 pub const SearchEngine = struct {
     allocator: std.mem.Allocator,
@@ -29,27 +30,30 @@ pub const SearchEngine = struct {
         const query_norm = try model.normalizeAlloc(self.allocator, query);
         defer self.allocator.free(query_norm);
 
-        var scored = std.ArrayList(ScoredEntry){};
-        defer scored.deinit(self.allocator);
+        var scored = PriorityQueue(ScoredEntry, void, ascScore).init(self.allocator, {});
+        defer scored.deinit();
 
         for (entries) |entry| {
             if (scoreEntry(entry, query_norm)) |score| {
-                try scored.append(self.allocator, .{ .entry = entry, .score = score });
+                try scored.add(.{ .entry = entry, .score = score });
+                if (scored.items.len > limit) {
+                    _ = scored.remove();
+                }
             }
         }
 
-        if (scored.items.len == 0) return &[_]Entry{};
+        const count = scored.items.len;
+        if (count == 0) return &[_]Entry{};
 
-        std.sort.pdq(ScoredEntry, scored.items, {}, descScore);
-
-        if (scored.items.len > limit) {
-            scored.shrinkRetainingCapacity(limit);
+        var sorted = try self.allocator.alloc(ScoredEntry, count);
+        var idx = count;
+        while (scored.removeOrNull()) |s| {
+            idx -= 1;
+            sorted[idx] = s;
         }
 
-        const out = try self.allocator.alloc(Entry, scored.items.len);
-        for (scored.items, 0..) |s, idx| {
-            out[idx] = s.entry;
-        }
+        const out = try self.allocator.alloc(Entry, sorted.len);
+        for (sorted, 0..) |s, i| out[i] = s.entry;
         return out;
     }
 };
@@ -59,8 +63,8 @@ const ScoredEntry = struct {
     score: f64,
 };
 
-fn descScore(_: void, a: ScoredEntry, b: ScoredEntry) bool {
-    return a.score > b.score;
+fn ascScore(_: void, a: ScoredEntry, b: ScoredEntry) std.math.Order {
+    return std.math.order(a.score, b.score);
 }
 
 fn fuzzyScore(haystack: []const u8, needle: []const u8) ?f64 {
@@ -68,20 +72,15 @@ fn fuzzyScore(haystack: []const u8, needle: []const u8) ?f64 {
     if (needle.len > haystack.len) return null;
 
     if (std.mem.indexOf(u8, haystack, needle)) |idx| {
-        const proximity: f64 = 1.0 / @as(f64, @floatFromInt(idx + 1));
         const coverage: f64 = @as(f64, @floatFromInt(needle.len)) /
             @as(f64, @floatFromInt(haystack.len));
-        return 1.0 + proximity + coverage;
+        const proximity: f64 = 1.0 / (1.0 + @as(f64, @floatFromInt(idx)));
+        const prefix_bonus: f64 = if (idx == 0) 2.0 else 0.0;
+        const boundary_bonus: f64 = if (isBoundary(haystack, idx)) 0.4 else 0.0;
+        return 4.0 + coverage + proximity + prefix_bonus + boundary_bonus;
     }
 
-    var nidx: usize = 0;
-    for (haystack) |c| {
-        if (c == needle[nidx]) {
-            nidx += 1;
-            if (nidx == needle.len) return 0.5;
-        }
-    }
-    return null;
+    return subsequenceScore(haystack, needle);
 }
 
 fn scoreEntry(entry: Entry, query_norm: []const u8) ?f64 {
@@ -90,15 +89,67 @@ fn scoreEntry(entry: Entry, query_norm: []const u8) ?f64 {
 
     const base = if (title_score) |ts| blk: {
         if (url_score) |us| {
-            break :blk if (ts > us) ts else us;
+            const blended = if (ts > us) ts else ts * 0.2 + us * 0.8;
+            break :blk blended;
         }
-        break :blk ts;
+        break :blk ts + 0.2;
     } else url_score orelse return null;
 
     const freq = entry.visit_count orelse 0;
-    const freq_boost = 1.0 + std.math.log1p(@as(f64, @floatFromInt(freq))) * 0.1;
-    const weighted = base * freq_boost * entry.source.weight();
+    const freq_boost = 1.0 + std.math.log1p(@as(f64, @floatFromInt(freq))) * 0.08;
+    const recency_boost = if (entry.last_visit) |lv| blk: {
+        const days = @as(f64, @floatFromInt(@max(lv, @as(i64, 0)))) / 86_400_000.0;
+        break :blk 1.0 + @min(days, 30.0) * 0.002;
+    } else 1.0;
+    const weighted = base * freq_boost * recency_boost * entry.source.weight();
     return weighted;
+}
+
+fn subsequenceScore(haystack: []const u8, needle: []const u8) ?f64 {
+    var hpos: usize = 0;
+    var first: usize = 0;
+    var last: usize = 0;
+    var streak: usize = 0;
+    var penalty: f64 = 0;
+    var found_any = false;
+
+    for (needle) |c| {
+        const pos = findFrom(haystack, c, hpos) orelse return null;
+        if (!found_any) {
+            first = pos;
+            found_any = true;
+        }
+        if (pos == hpos) {
+            streak += 1;
+        } else {
+            streak = 1;
+            penalty += @as(f64, @floatFromInt(pos - hpos)) * 0.04;
+        }
+        last = pos;
+        hpos = pos + 1;
+    }
+
+    const span = last - first + 1;
+    const coverage = @as(f64, @floatFromInt(needle.len)) / @as(f64, @floatFromInt(haystack.len));
+    const tightness = @as(f64, @floatFromInt(needle.len)) / @as(f64, @floatFromInt(span));
+    const position_bonus = 1.0 / (1.0 + @as(f64, @floatFromInt(first)));
+    const streak_bonus = @as(f64, @floatFromInt(streak)) * 0.1;
+
+    return 1.0 + coverage + tightness + position_bonus + streak_bonus - penalty;
+}
+
+fn isBoundary(haystack: []const u8, idx: usize) bool {
+    if (idx == 0 or idx > haystack.len) return true;
+    const prev = haystack[idx - 1];
+    return prev == '/' or prev == '-' or prev == '_' or prev == ' ' or prev == '.';
+}
+
+fn findFrom(haystack: []const u8, needle: u8, start: usize) ?usize {
+    var i = start;
+    while (i < haystack.len) : (i += 1) {
+        if (haystack[i] == needle) return i;
+    }
+    return null;
 }
 
 pub fn dedupeEntries(allocator: std.mem.Allocator, entries: []Entry) ![]Entry {

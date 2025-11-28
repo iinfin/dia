@@ -248,15 +248,17 @@ test "parse simple tab entry" {
     try cmd.appendSlice(alloc, &std.mem.toBytes(@as(i32, 5)));
 
     const url = "https://example.com";
-    try cmd.appendSlice(alloc, &std.mem.toBytes(@as(u32, url.len)));
+    try cmd.appendSlice(alloc, &std.mem.toBytes(@as(u32, @intCast(url.len))));
     try cmd.appendSlice(alloc, url);
-    try cmd.appendNTimes(alloc, 0, nextMultipleOf4(@as(u32, url.len)) - url.len);
+    const url_pad = nextMultipleOf4(@as(u32, @intCast(url.len))) - url.len;
+    try cmd.appendNTimes(alloc, 0, url_pad);
 
     const title_utf16 = [_]u16{ 'E', 'x', 'a', 'm', 'p', 'l', 'e' };
     const title_bytes = std.mem.sliceAsBytes(&title_utf16);
-    try cmd.appendSlice(alloc, &std.mem.toBytes(@as(u32, title_utf16.len)));
+    try cmd.appendSlice(alloc, &std.mem.toBytes(@as(u32, @intCast(title_utf16.len))));
     try cmd.appendSlice(alloc, title_bytes);
-    try cmd.appendNTimes(alloc, 0, nextMultipleOf4(@as(u32, title_bytes.len)) - title_bytes.len);
+    const title_pad = nextMultipleOf4(@as(u32, @intCast(title_bytes.len))) - title_bytes.len;
+    try cmd.appendNTimes(alloc, 0, title_pad);
 
     try cmd.appendSlice(alloc, &std.mem.toBytes(@as(u32, 0))); // state len
     try cmd.appendSlice(alloc, &std.mem.toBytes(@as(u32, 0))); // transition
