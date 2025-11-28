@@ -6,6 +6,7 @@ const tabs = @import("tabs.zig");
 const search = @import("search.zig");
 const output = @import("output.zig");
 const model = @import("model.zig");
+const Entry = model.Entry;
 
 const Allocator = std.mem.Allocator;
 
@@ -63,14 +64,15 @@ fn run() !void {
         const opts = try parseCommonArgs(&args, alloc);
         const cfg = try config.Config.init(alloc, opts.profile);
         const sessions_dir = try cfg.sessionsDir();
-        const entries = tabs.loadTabs(alloc, sessions_dir) catch |err| switch (err) {
-            error.SessionsMissing, error.NoSessionFiles, error.InvalidHeader => {
-                var buf: [256]u8 = undefined;
-                const msg = std.fmt.bufPrint(&buf, "warning: {s}\n", .{@errorName(err)}) catch "warning\n";
-                try std.fs.File.stderr().writeAll(msg);
-                return;
-            },
-            else => return err,
+        const entries = tabs.loadTabs(alloc, sessions_dir) catch |err| {
+            warn(err);
+            const empty: []Entry = &.{};
+            if (opts.json) {
+                try output.printEntriesArray(empty);
+            } else {
+                try output.printEntries(empty);
+            }
+            return;
         };
         if (opts.json) {
             try output.printEntriesArray(entries);
@@ -104,9 +106,7 @@ fn run() !void {
             if (tabs.loadTabs(alloc, path)) |tab_entries| {
                 try all_entries.appendSlice(alloc, tab_entries);
             } else |err| {
-                var buf: [256]u8 = undefined;
-                const msg = std.fmt.bufPrint(&buf, "warning: {s}\n", .{@errorName(err)}) catch "warning\n";
-                _ = std.fs.File.stderr().writeAll(msg) catch {};
+                warn(err);
             }
         }
 
@@ -249,4 +249,21 @@ fn printUsage() !void {
         \\
     ;
     try std.fs.File.stderr().writeAll(usage);
+}
+
+fn warn(err: anyerror) void {
+    var buf: [256]u8 = undefined;
+    const msg = std.fmt.bufPrint(&buf, "warning: {s}\n", .{@errorName(err)}) catch "warning\n";
+    _ = std.fs.File.stderr().writeAll(msg) catch {};
+}
+
+test "pulls in module tests" {
+    std.testing.refAllDecls(@This());
+    std.testing.refAllDecls(model);
+    std.testing.refAllDecls(@import("history.zig"));
+    std.testing.refAllDecls(@import("bookmarks.zig"));
+    std.testing.refAllDecls(@import("tabs.zig"));
+    std.testing.refAllDecls(@import("search.zig"));
+    std.testing.refAllDecls(@import("output.zig"));
+    std.testing.refAllDecls(@import("config.zig"));
 }

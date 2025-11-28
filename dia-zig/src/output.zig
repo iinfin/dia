@@ -4,30 +4,32 @@ const model = @import("model.zig");
 const Entry = model.Entry;
 
 pub fn printEntries(entries: []const Entry) !void {
-    var out = std.io.Writer.Allocating.init(std.heap.page_allocator);
-    defer out.deinit();
+    var buffer: [4096]u8 = undefined;
+    var file = std.fs.File.stdout();
+    var writer = file.writer(&buffer);
+    defer writer.interface.flush() catch {};
+    const stream = &writer.interface;
 
     for (entries) |entry| {
-        var js = std.json.Stringify{ .writer = &out.writer, .options = .{ .emit_null_optional_fields = false } };
+        var js = std.json.Stringify{ .writer = stream, .options = .{ .emit_null_optional_fields = false } };
         try js.write(entry);
-        try out.writer.writeByte('\n');
+        try stream.writeByte('\n');
     }
-
-    try std.fs.File.stdout().writeAll(out.written());
 }
 
 pub fn printEntriesArray(entries: []const Entry) !void {
-    var out = std.io.Writer.Allocating.init(std.heap.page_allocator);
-    defer out.deinit();
+    var buffer: [4096]u8 = undefined;
+    var file = std.fs.File.stdout();
+    var writer = file.writer(&buffer);
+    defer writer.interface.flush() catch {};
+    const stream = &writer.interface;
 
-    var js = std.json.Stringify{ .writer = &out.writer, .options = .{ .emit_null_optional_fields = false } };
+    var js = std.json.Stringify{ .writer = stream, .options = .{ .emit_null_optional_fields = false } };
     try js.beginArray();
     for (entries) |entry| {
         try js.write(entry);
     }
     try js.endArray();
-
-    try std.fs.File.stdout().writeAll(out.written());
 }
 
 pub const SearchResult = struct {
@@ -45,11 +47,12 @@ pub const SearchResult = struct {
 };
 
 pub fn printSearchResults(entries: []const Entry) !void {
-    var out = std.io.Writer.Allocating.init(std.heap.page_allocator);
-    defer out.deinit();
+    var buffer: [4096]u8 = undefined;
+    var file = std.fs.File.stdout();
+    var writer = file.writer(&buffer);
+    defer writer.interface.flush() catch {};
+    const stream = &writer.interface;
 
-    var js = std.json.Stringify{ .writer = &out.writer, .options = .{ .emit_null_optional_fields = false } };
+    var js = std.json.Stringify{ .writer = stream, .options = .{ .emit_null_optional_fields = false } };
     try js.write(SearchResult{ .results = entries, .count = entries.len });
-
-    try std.fs.File.stdout().writeAll(out.written());
 }
