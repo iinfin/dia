@@ -4,22 +4,22 @@ Fast read-only CLI for Dia browser history, bookmarks, tabs. Raycast-ready.
 
 ## Core Facts
 
-- Single Rust binary, macOS arm64/x64, GPL-3.0-or-later (snss dep)
+- Single Zig binary, macOS arm64/x64
 - Cold-start target: <50ms for combined search
 - Profile root: `~/Library/Application Support/Dia/User Data/<profile>`
 
 ## 1. Architecture
 
-1. Modules: main.rs (CLI), config.rs (paths), model.rs (Entry), search.rs (nucleo), history.rs (SQLite), bookmarks.rs (JSON), tabs.rs (SNSS), output.rs
+1. Modules: main.zig (CLI), config.zig (paths), model.zig (Entry), search.zig (fuzzy), history.zig (SQLite), bookmarks.zig (JSON), tabs.zig (SNSS), output.zig
 2. Data Flow: load sources -> normalize -> dedupe by canonical URL -> fuzzy rank -> JSON out
-3. Deps: clap, rusqlite (bundled), nucleo-matcher, snss, ahash, anyhow, serde
+3. Deps: system sqlite3, libc
 
 ## 2. Commands
 
-1. `dia-zig history [--limit N] [--profile P] [--json]` - browse history (default limit 100)
-2. `dia-zig bookmarks [--profile P] [--json]` - all bookmarks
-3. `dia-zig tabs [--profile P] [--json]` - open tabs (best-effort, warns on failure)
-4. `dia-zig search [QUERY] [--all] [--sources S] [--limit N] [--profile P] [--json]` - fuzzy search across sources
+1. `dia-cli history [--limit N] [--profile P] [--json]` - browse history (default limit 100)
+2. `dia-cli bookmarks [--profile P] [--json]` - all bookmarks
+3. `dia-cli tabs [--profile P] [--json]` - open tabs (best-effort, warns on failure)
+4. `dia-cli search [QUERY] [--all] [--sources S] [--limit N] [--profile P] [--json]` - fuzzy search across sources
 
 ## 3. Data Sources
 
@@ -36,14 +36,13 @@ Fast read-only CLI for Dia browser history, bookmarks, tabs. Raycast-ready.
 
 ## 5. Development
 
-1. Build: `cargo build` (dev), `cargo build --release` (optimized)
-2. Test: `cargo test`
-3. Lint: `cargo clippy -- -D warnings`, `rustfmt`
-4. Scripts: `b build`, `b test`, `b run` (`b` is an alias for `bun run` in my global shell dotfiles setup)
+1. Build: `zig build` (dev), `zig build -Doptimize=ReleaseFast` (optimized)
+2. Test: `zig build test`
+3. Scripts: `b build`, `b test`, `b run` (`b` is an alias for `bun run` in my global shell dotfiles setup)
 
 ## 6. Conventions
 
 1. Commits: commitlint `type(scope): message`. Types: feat/fix/docs/style/refactor/test/chore. Scopes: core/data/search/deps/docs/repo.
-2. Code Quality: rustfmt clean, clippy clean, unit tests for new modules
+2. Code Quality: zig fmt clean, unit tests for new modules
 3. Error Handling: stderr for warnings, stdout for JSON, graceful fallback (tabs returns [] on failure)
 4. No emojis anywhere

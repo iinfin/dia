@@ -17,15 +17,11 @@ QUERY_COUNT="${#QUERY_ARRAY[@]}"
 
 cd "$ROOT_DIR"
 
-echo "Building dia-zig (ReleaseFast)..."
-(cd "$ROOT_DIR/dia-zig" && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache \
+echo "Building dia-cli (ReleaseFast)..."
+(cd "$ROOT_DIR/dia-cli" && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache \
   zig build -Doptimize=ReleaseFast)
 
-echo "Building dia-rs (release)..."
-cargo build --release --manifest-path dia-rs/Cargo.toml
-
-ZIG_BIN="$ROOT_DIR/dia-zig/zig-out/bin/dia-zig"
-RS_BIN="$ROOT_DIR/dia-rs/target/release/dia-rs"
+CLI_BIN="$ROOT_DIR/dia-cli/zig-out/bin/dia-cli"
 
 if ! command -v hyperfine >/dev/null 2>&1; then
   echo "hyperfine not found; please install it to run benchmarks." >&2
@@ -37,5 +33,4 @@ echo "Benchmarking search (profile=${PROFILE}, queries=${QUERY_COUNT} values, li
 RANDOM_QUERY_SNIPPET='IFS=, read -r -a qs <<< "$DIA_QUERY_LIST"; query=${qs[RANDOM % ${#qs[@]}]}; exec "$1" search "$query" --profile "$DIA_PROFILE" --limit "$DIA_LIMIT" --json'
 
 hyperfine --warmup "${WARMUP}" --min-runs 100 \
-  "DIA_QUERY_LIST='${QUERY_LIST}' DIA_PROFILE='${PROFILE}' DIA_LIMIT='${LIMIT}' bash -c '${RANDOM_QUERY_SNIPPET}' _ '${ZIG_BIN}'" \
-  "DIA_QUERY_LIST='${QUERY_LIST}' DIA_PROFILE='${PROFILE}' DIA_LIMIT='${LIMIT}' bash -c '${RANDOM_QUERY_SNIPPET}' _ '${RS_BIN}'"
+  "DIA_QUERY_LIST='${QUERY_LIST}' DIA_PROFILE='${PROFILE}' DIA_LIMIT='${LIMIT}' bash -c '${RANDOM_QUERY_SNIPPET}' _ '${CLI_BIN}'"

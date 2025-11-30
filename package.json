@@ -5,15 +5,13 @@
 	"type": "module",
 	"scripts": {
 		"prepare": "husky",
-		"build": "cd dia-zig && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache zig build -Doptimize=ReleaseFast",
-		"test": "cd dia-zig && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache zig build test",
-		"run": "cd dia-zig && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache zig build run --",
-		"run:bin": "ZIG_GLOBAL_CACHE_DIR=./.zig-cache ZIG_LOCAL_CACHE_DIR=./.zig-cache ./dia-zig/zig-out/bin/dia-zig",
-		"clean": "rm -rf .zig-cache dia-zig/zig-cache",
-		"bench": "./scripts/bench.sh",
-		"build-rs": "cargo build --release --manifest-path dia-rs/Cargo.toml",
-		"test-rs": "cargo test --manifest-path dia-rs/Cargo.toml",
-		"run-rs": "./dia-rs/target/release/dia-rs"
+		"build": "cd dia-cli && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache zig build -Doptimize=ReleaseFast",
+		"test": "cd dia-cli && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache zig build test",
+		"run": "cd dia-cli && ZIG_GLOBAL_CACHE_DIR=../.zig-cache ZIG_LOCAL_CACHE_DIR=../.zig-cache zig build run --",
+		"run:bin": "ZIG_GLOBAL_CACHE_DIR=./.zig-cache ZIG_LOCAL_CACHE_DIR=./.zig-cache ./dia-cli/zig-out/bin/dia-cli",
+		"clean": "rm -rf .zig-cache dia-cli/zig-cache",
+		"format": "zig fmt dia-cli/src",
+		"bench": "./scripts/bench.sh"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^20.1.0",

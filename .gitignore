@@ -1,9 +1,8 @@
 .zig-cache/
-dia-zig/.zig-cache/
+dia-cli/.zig-cache/
 zig-out/
-dia-zig/zig-out/
+dia-cli/zig-out/
 target/
-dia-rs/target/
 node_modules/
 bun.lock
 .DS_Store
