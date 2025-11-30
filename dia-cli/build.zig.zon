@@ -1,7 +1,7 @@
 .{
-    .name = .dia_zig,
+    .name = .dia_cli,
     .version = "0.1.0",
-    .fingerprint = 0xc4dd61809fc96387,
+    .fingerprint = 0x4de5203dbd298161,
     .minimum_zig_version = "0.15.2",
     .dependencies = .{},
     .paths = .{

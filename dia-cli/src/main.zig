@@ -242,10 +242,10 @@ fn parseSearchArgs(args: *std.process.ArgIterator, allocator: Allocator) !struct
 fn printUsage() !void {
     const usage =
         \\Usage:
-        \\  dia-zig history [--limit N] [--profile P] [--json]
-        \\  dia-zig bookmarks [--profile P] [--json]
-        \\  dia-zig tabs [--profile P] [--json]
-        \\  dia-zig search [QUERY] [--all] [--sources S] [--limit N] [--profile P] [--json]
+        \\  dia-cli history [--limit N] [--profile P] [--json]
+        \\  dia-cli bookmarks [--profile P] [--json]
+        \\  dia-cli tabs [--profile P] [--json]
+        \\  dia-cli search [QUERY] [--all] [--sources S] [--limit N] [--profile P] [--json]
         \\
     ;
     try std.fs.File.stderr().writeAll(usage);
